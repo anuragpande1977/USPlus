@@ -1,12 +1,7 @@
 // === USPlus® — Single-Parameter Table Comparator (frontend) ===
-// Optional: set a Google Apps Script Web App URL to log submissions; leave "" to disable logging.
-const SCRIPT_URL = "";
+// No consent, no notes, no logging — clean and simple.
 
-/** Fixed parameter list per your spec **/
 const CONFIG = {
-  // One-row table with these brands as columns, in this order:
-  brandsOrder: ["USPlus", "ViSPO", "Flowens", "SabalSelect", "Permixon"],
-
   parameters: [
     { key:"usp_verified",           label:"USP Verified",                           type:"boolean" },
     { key:"clinical_study",         label:"Clinical Study Availability",            type:"boolean" },
@@ -16,8 +11,7 @@ const CONFIG = {
     { key:"time_to_benefit_weeks",  label:"Clinically Meaningful Benefits (weeks)", type:"number"  },
     { key:"capsules_to_benefit",    label:"Capsules Needed for Benefit",            type:"number"  }
   ],
-
-  // Prefilled brand values from your message (1 = Yes, 0 = No for booleans)
+  // Order: USPlus, ViSPO, Flowens, SabalSelect, Permixon
   products: [
     {
       id:"usplus", name:"USPlus",
@@ -82,17 +76,15 @@ const CONFIG = {
   ]
 };
 
-/* ---------- DOM boot ---------- */
 document.addEventListener('DOMContentLoaded', () => {
+  // Basic handles
   const yr = document.getElementById('yr'); if (yr) yr.textContent = new Date().getFullYear();
   const form       = document.getElementById('form');
   const selectEl   = document.getElementById('paramSelect');
-  const okBox      = document.getElementById('okBox');
   const errBox     = document.getElementById('errBox');
   const results    = document.getElementById('results');
   const tableWrap  = document.getElementById('tableWrap');
   const paramTitle = document.getElementById('paramTitle');
-  const submitBtn  = document.getElementById('submitBtn');
 
   if (!selectEl) {
     console.error('Missing <select id="paramSelect"> in index.html');
@@ -100,31 +92,30 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  if (okBox) okBox.style.display = 'none';
   if (errBox) errBox.style.display = 'none';
   if (results) results.style.display = 'none';
 
-  // Build parameter dropdown
-  selectEl.innerHTML = '<option value="">Select…</option>';
-  CONFIG.parameters.forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p.key;
-    opt.textContent = p.label;
-    selectEl.appendChild(opt);
-  });
+  // Populate dropdown (robust)
+  try {
+    selectEl.innerHTML = '<option value="">Select…</option>';
+    CONFIG.parameters.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.key;
+      opt.textContent = p.label;
+      selectEl.appendChild(opt);
+    });
+  } catch (e) {
+    console.error('Failed to populate dropdown:', e);
+    if (errBox) { errBox.textContent = 'Could not build parameter list.'; errBox.style.display = 'block'; }
+    return;
+  }
 
-  // Helper formatting
+  // Helpers
   const fmt = (v, type) => {
     if (v === "" || v === undefined || v === null) return "—";
     if (type === "boolean") return (Number(v) === 1 ? "Yes" : "No");
     return v;
   };
-
-  // Ensure brands are displayed in the requested order
-  const brands = CONFIG.brandsOrder.map(name => {
-    const match = CONFIG.products.find(p => p.name.toLowerCase() === name.toLowerCase());
-    return match || { id:name.toLowerCase(), name, specs:{} };
-  });
 
   // Render table for one parameter
   function renderParamTable(paramKey) {
@@ -133,12 +124,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (paramTitle) paramTitle.textContent = `Results • ${param.label}`;
 
-    const head = ['<th>Parameter</th>', ...brands.map(b => `<th>${b.name}</th>`)].join('');
-    const row  = [`<td>${param.label}</td>`, ...brands.map(b => `<td>${fmt(b.specs[param.key], param.type)}</td>`)].join('');
+    // header: brands as columns
+    const head = ['<th>Parameter</th>', ...CONFIG.products.map(b => `<th>${b.name}</th>`)].join('');
+    // single row: selected parameter values per brand
+    const row  = [`<td>${param.label}</td>`, ...CONFIG.products.map(b => `<td>${fmt(b.specs[param.key], param.type)}</td>`)].join('');
 
-    tableWrap.innerHTML = `<table>
-      <thead><tr>${head}</tr></thead>
-      <tbody><tr>${row}</tr></tbody>
-    </table>`;
+    tableWrap.innerHTML = `
+      <table>
+        <thead><tr>${head}</tr></thead>
+        <tbody><tr>${row}</tr></tbody>
+      </table>
+    `;
 
-    if
+    if (results) results.style.display = 'block';
+  }
+
+  // Submit: validate & render
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (errBox) errBox.style.display = 'none';
+    if (results) results.style.display = 'none';
+
+    const emailVal = (form.email?.value || '').trim();
+    const paramKey = selectEl.value;
+
+    if (!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+      if (errBox) { errBox.textContent = 'Please enter a valid email address.'; errBox.style.display = 'block'; }
+      return;
+    }
+    if (!paramKey) {
+      if (errBox) { errBox.textContent = 'Please choose a parameter.'; errBox.style.display = 'block'; }
+      return;
+    }
+
+    renderParamTable(paramKey);
+  });
+
+  // Convenience for quick test in console: window.show('usp_verified')
+  window.show = (k)=>{ selectEl.value = k; form.dispatchEvent(new Event('submit', {cancelable:true})); };
+});
+
