@@ -3,61 +3,63 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>USPlus® — Product Comparison</title>
-<meta name="theme-color" content="#0b3b2e">
+<title>USPlus® — Head-to-Head Comparator | Valensa</title>
+<meta name="theme-color" content="#43215f">
 <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
-  <div class="hero">
+  <!-- Brand header -->
+  <header class="hero">
     <div class="container">
-      <h1>USPlus® — Product Comparison</h1>
-      <p>Choose a competitor, set the parameters, and see how USPlus stacks up.</p>
+      <div class="brand">
+        <img class="valensa" src="assets/valensa-logo.png" alt="Valensa" />
+        <img class="usplus" src="assets/usplus-logo.png" alt="USPlus" />
+      </div>
+      <h1>USPlus® Comparator</h1>
+      <p>Select a parameter to compare USPlus against leading brands.</p>
     </div>
-  </div>
+  </header>
 
-  <div class="wrap">
-    <div class="card">
-      <form id="form" novalidate>
-        <h2>Choose Competitor</h2>
+  <main class="wrap">
+    <section class="card">
+      <form id="form">
         <div class="grid grid-3">
           <div>
-            <label>Competitor Product <span class="req">*</span></label>
-            <select name="competitor" id="competitor" required></select>
+            <label>Parameter <span class="req">*</span></label>
+            <select id="paramSelect" required></select>
           </div>
           <div>
             <label>Your Email (optional)</label>
             <input type="email" name="email" placeholder="you@example.com" autocomplete="email" />
           </div>
           <div>
-            <label>Use Case / Notes (optional)</label>
-            <input type="text" name="notes" placeholder="e.g., BPH symptom relief, daily use" />
+            <label>Notes (optional)</label>
+            <input type="text" name="notes" placeholder="e.g., R&D review" />
           </div>
         </div>
 
-        <div class="hr"></div>
-        <h2>Parameters (USPlus values)</h2>
-        <p class="muted">Leave blank to use the default USPlus value. “Yes/No” are scored as 1/0.</p>
-        <div id="paramFields" class="grid grid-3"></div>
+        <div class="muted small" style="margin-top:6px">
+          Scoring: Yes/No parameters score 1/0. For numeric parameters the direction is shown next to the name.
+        </div>
 
         <div class="actions">
           <label class="muted"><input type="checkbox" id="consent" required> I consent to store this comparison to improve USPlus.</label>
           <button type="submit" class="btn" id="submitBtn">Compare</button>
         </div>
 
-        <div class="success" id="okBox" style="display:none">Saved. Thanks for your input!</div>
-        <div class="error" id="errBox" style="display:none">Sorry, something went wrong. Please try again.</div>
+        <div class="success" id="okBox" style="display:none">Saved.</div>
+        <div class="error" id="errBox" style="display:none">Sorry, something went wrong.</div>
       </form>
-    </div>
+    </section>
 
-    <div class="card" id="results" style="display:none">
-      <h2>Comparison Result</h2>
-      <div id="summary"></div>
+    <section class="card" id="results" style="display:none">
+      <h2 id="paramTitle">Results</h2>
+      <div id="bars" class="bars"></div>
       <div id="tableWrap" class="tableWrap"></div>
-      <div id="insights" class="insights"></div>
-    </div>
+    </section>
+  </main>
 
-    <footer>© <span id="yr"></span> USPlus®</footer>
-  </div>
+  <footer>© <span id="yr"></span> Valensa International • USPlus®</footer>
 
   <script src="assets/app.js"></script>
 </body>
