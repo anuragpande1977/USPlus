@@ -1,20 +1,12 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>USPlus® — Quick Comparator | Valensa</title>
-<meta name="theme-color" content="#43215f">
-<link rel="stylesheet" href="assets/styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>USPlus® Comparator</title>
+  <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
-  <header class="hero">
-    <div class="container">
-      <h1>USPlus® Comparator</h1>
-      <p>Select one parameter and view values across brands.</p>
-    </div>
-  </header>
-
   <main class="wrap">
     <section class="card">
       <form id="form" novalidate>
@@ -22,7 +14,7 @@
         <div class="grid grid-3">
           <div>
             <label>Email Address <span class="req">*</span></label>
-            <input type="email" name="email" id="email" placeholder="you@example.com" autocomplete="email" required />
+            <input type="email" name="email" id="email" placeholder="you@example.com" required />
           </div>
           <div>
             <label>Your Name</label>
@@ -36,6 +28,7 @@
           <div>
             <label>Parameter <span class="req">*</span></label>
             <select id="paramSelect" required></select>
+            <div id="paramDebug" class="muted" style="margin-top:6px;display:none"></div>
           </div>
           <div style="display:flex;align-items:flex-end">
             <button type="submit" class="btn" id="submitBtn">Compare</button>
@@ -43,7 +36,7 @@
           <div></div>
         </div>
 
-        <div class="error" id="errBox" style="display:none">Sorry, something went wrong.</div>
+        <div class="error" id="errBox" style="display:none"></div>
       </form>
     </section>
 
@@ -51,10 +44,12 @@
       <h2 id="paramTitle">Results</h2>
       <div id="tableWrap" class="tableWrap"></div>
     </section>
+
+    <footer>© <span id="yr"></span> Valensa International • USPlus®</footer>
   </main>
 
-  <footer>© <span id="yr"></span> Valensa International • USPlus®</footer>
-
+  <!-- IMPORTANT: Script at the very end, path is case-sensitive -->
   <script src="assets/app.js"></script>
 </body>
 </html>
+
