@@ -3,10 +3,42 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>USPlus® Comparator</title>
-  <link rel="stylesheet" href="assets/styles.css">
+  <title>USPlus® Comparator • Valensa</title>
+  <style>
+    :root{
+      --valensa:#0b6b72; --usplus:#43215f; --ink:#0f172a; --muted:#64748b;
+      --bg:#f7faf9; --card:#fff; --border:#e2e8f0;
+    }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif}
+    header{background:linear-gradient(120deg,var(--usplus),#5a2a7f);color:#fff;padding:18px 14px;border-bottom:4px solid var(--valensa)}
+    header .container{max-width:980px;margin:0 auto}
+    h1{margin:0 0 6px;font-size:1.3rem} p{margin:0;color:#e9d8fd}
+    .wrap{max-width:980px;margin:0 auto;padding:18px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;
+      box-shadow:0 10px 24px rgba(0,0,0,.06);padding:18px;margin-bottom:16px}
+    label{display:block;font-weight:600;margin:8px 0 6px}
+    input,select{width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:#fff}
+    .grid{display:grid;gap:14px} .grid-3{grid-template-columns:1fr 1fr 1fr}
+    @media(max-width:780px){.grid-3{grid-template-columns:1fr}}
+    .btn{appearance:none;border:0;padding:12px 18px;border-radius:12px;cursor:pointer;font-weight:700;background:var(--usplus);color:#fff}
+    .error{display:none;background:#fef2f2;border:1px solid #ef4444;color:#7f1d1d;padding:10px;border-radius:10px;margin-top:10px}
+    .tableWrap{overflow:auto;margin-top:12px}
+    table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left}
+    th{background:#f1f5f9}
+    footer{color:var(--muted);font-size:.85rem;text-align:center;margin:14px 0 28px}
+    .req{color:#ef4444}
+  </style>
 </head>
 <body>
+  <header>
+    <div class="container">
+      <h1>USPlus® Comparator</h1>
+      <p>Select one parameter and view values across brands.</p>
+    </div>
+  </header>
+
   <main class="wrap">
     <section class="card">
       <form id="form" novalidate>
@@ -23,12 +55,12 @@
           <div></div>
         </div>
 
-        <!-- Row 2: Parameter dropdown -->
+        <!-- Row 2: Parameter dropdown + button -->
         <div class="grid grid-3" style="margin-top:8px">
           <div>
             <label>Parameter <span class="req">*</span></label>
             <select id="paramSelect" required></select>
-            <div id="paramDebug" class="muted" style="margin-top:6px;display:none"></div>
+            <div id="paramDebug" style="color:var(--muted);font-size:.9rem;margin-top:6px;display:none"></div>
           </div>
           <div style="display:flex;align-items:flex-end">
             <button type="submit" class="btn" id="submitBtn">Compare</button>
@@ -36,7 +68,7 @@
           <div></div>
         </div>
 
-        <div class="error" id="errBox" style="display:none"></div>
+        <div class="error" id="errBox"></div>
       </form>
     </section>
 
@@ -44,12 +76,103 @@
       <h2 id="paramTitle">Results</h2>
       <div id="tableWrap" class="tableWrap"></div>
     </section>
-
-    <footer>© <span id="yr"></span> Valensa International • USPlus®</footer>
   </main>
 
-  <!-- IMPORTANT: Script at the very end, path is case-sensitive -->
-  <script src="assets/app.js"></script>
+  <footer>© <span id="yr"></span> Valensa International • USPlus®</footer>
+
+  <script>
+    // ---------- Data (exactly as you specified) ----------
+    const CONFIG = {
+      parameters: [
+        { key:"usp_verified",           label:"USP Verified",                           type:"boolean" },
+        { key:"clinical_study",         label:"Clinical Study Availability",            type:"boolean" },
+        { key:"unique_claims",          label:"Unique Claims (Yes/No)",                 type:"boolean" },
+        { key:"solvent_free",           label:"Solvent-Free Extraction",                type:"boolean" },
+        { key:"monograph_compliance",   label:"Monograph Compliance",                   type:"boolean" },
+        { key:"time_to_benefit_weeks",  label:"Clinically Meaningful Benefits (weeks)", type:"number"  },
+        { key:"capsules_to_benefit",    label:"Capsules Needed for Benefit",            type:"number"  }
+      ],
+      // Order: USPlus, ViSPO, Flowens, SabalSelect, Permixon
+      products: [
+        { id:"usplus", name:"USPlus", specs:{
+          usp_verified:1, clinical_study:1, unique_claims:1, solvent_free:1, monograph_compliance:1,
+          time_to_benefit_weeks:4, capsules_to_benefit:30 } },
+        { id:"vispo", name:"ViSPO", specs:{
+          usp_verified:0, clinical_study:1, unique_claims:0, solvent_free:0, monograph_compliance:0,
+          time_to_benefit_weeks:12, capsules_to_benefit:90 } },
+        { id:"flowens", name:"Flowens", specs:{
+          usp_verified:0, clinical_study:1, unique_claims:0, solvent_free:0, monograph_compliance:0,
+          time_to_benefit_weeks:24, capsules_to_benefit:180 } },
+        { id:"sabalselect", name:"SabalSelect", specs:{
+          usp_verified:0, clinical_study:1, unique_claims:0, solvent_free:0, monograph_compliance:0,
+          time_to_benefit_weeks:12, capsules_to_benefit:90 } },
+        { id:"permixon", name:"Permixon", specs:{
+          usp_verified:0, clinical_study:1, unique_claims:0, solvent_free:0, monograph_compliance:0,
+          time_to_benefit_weeks:12, capsules_to_benefit:90 } }
+      ]
+    };
+
+    // ---------- App ----------
+    document.addEventListener('DOMContentLoaded', () => {
+      // Footer year
+      const yr = document.getElementById('yr'); if (yr) yr.textContent = new Date().getFullYear();
+
+      const form       = document.getElementById('form');
+      const selectEl   = document.getElementById('paramSelect');
+      const errBox     = document.getElementById('errBox');
+      const results    = document.getElementById('results');
+      const tableWrap  = document.getElementById('tableWrap');
+      const paramTitle = document.getElementById('paramTitle');
+      const paramDebug = document.getElementById('paramDebug');
+
+      // Populate dropdown
+      selectEl.innerHTML = '<option value="">Select…</option>';
+      CONFIG.parameters.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.key; opt.textContent = p.label;
+        selectEl.appendChild(opt);
+      });
+      // Show a tiny debug count (can remove later)
+      if (paramDebug) { paramDebug.style.display='block'; paramDebug.textContent = `Loaded ${CONFIG.parameters.length} parameters`; }
+
+      const fmt = (v, type) => {
+        if (v === "" || v === undefined || v === null) return "—";
+        if (type === "boolean") return (Number(v) === 1 ? "Yes" : "No");
+        return v;
+      };
+
+      function renderParamTable(paramKey){
+        const param = CONFIG.parameters.find(p=>p.key===paramKey);
+        if (!param) return;
+        paramTitle.textContent = `Results • ${param.label}`;
+
+        const head = ['<th>Parameter</th>', ...CONFIG.products.map(b=>`<th>${b.name}</th>`)].join('');
+        const row  = [`<td>${param.label}</td>`, ...CONFIG.products.map(b=>`<td>${fmt(b.specs[param.key], param.type)}</td>`)].join('');
+        tableWrap.innerHTML = `<table><thead><tr>${head}</tr></thead><tbody><tr>${row}</tr></tbody></table>`;
+        results.style.display = 'block';
+      }
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        errBox.style.display = 'none'; results.style.display='none';
+
+        const emailVal = (form.email?.value || '').trim();
+        const paramKey = selectEl.value;
+
+        if (!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+          errBox.textContent = 'Please enter a valid email address.'; errBox.style.display = 'block'; return;
+        }
+        if (!paramKey) {
+          errBox.textContent = 'Please choose a parameter.'; errBox.style.display = 'block'; return;
+        }
+        renderParamTable(paramKey);
+      });
+
+      // quick console helper: window.show('usp_verified')
+      window.show = (k)=>{ selectEl.value=k; form.dispatchEvent(new Event('submit', {cancelable:true})); };
+    });
+  </script>
 </body>
 </html>
+
 
