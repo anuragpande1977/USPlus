@@ -1,29 +1,89 @@
-// === USPlus® — Single-Parameter Table Comparator (robust) ===
-const SCRIPT_URL = ""; // optional logging
+// === USPlus® — Single-Parameter Table Comparator (frontend) ===
+// Optional: set a Google Apps Script Web App URL to log submissions; leave "" to disable logging.
+const SCRIPT_URL = "";
 
+/** Fixed parameter list per your spec **/
 const CONFIG = {
+  // One-row table with these brands as columns, in this order:
+  brandsOrder: ["USPlus", "ViSPO", "Flowens", "SabalSelect", "Permixon"],
+
   parameters: [
-    { key:"clinical_study",         label:"Clinical Study Availability",            type:"boolean" },
     { key:"usp_verified",           label:"USP Verified",                           type:"boolean" },
-    { key:"unique_claims",          label:"Unique Claims Strength (0–5)",           type:"number"  },
-    { key:"std_to_bio_fatty_acids", label:"Standardized to Bioactive Fatty Acids",  type:"boolean" },
+    { key:"clinical_study",         label:"Clinical Study Availability",            type:"boolean" },
+    { key:"unique_claims",          label:"Unique Claims (Yes/No)",                 type:"boolean" },
     { key:"solvent_free",           label:"Solvent-Free Extraction",                type:"boolean" },
     { key:"monograph_compliance",   label:"Monograph Compliance",                   type:"boolean" },
     { key:"time_to_benefit_weeks",  label:"Clinically Meaningful Benefits (weeks)", type:"number"  },
     { key:"capsules_to_benefit",    label:"Capsules Needed for Benefit",            type:"number"  }
   ],
+
+  // Prefilled brand values from your message (1 = Yes, 0 = No for booleans)
   products: [
-    { id:"usplus",    name:"USPlus®",  specs:{ clinical_study:"", usp_verified:"", unique_claims:"", std_to_bio_fatty_acids:"", solvent_free:"", monograph_compliance:"", time_to_benefit_weeks:"", capsules_to_benefit:"" } },
-    { id:"weider",    name:"Weider",   specs:{ clinical_study:"", usp_verified:"", unique_claims:"", std_to_bio_fatty_acids:"", solvent_free:"", monograph_compliance:"", time_to_benefit_weeks:"", capsules_to_benefit:"" } },
-    { id:"flowens",   name:"Flowens®", specs:{ clinical_study:"", usp_verified:"", unique_claims:"", std_to_bio_fatty_acids:"", solvent_free:"", monograph_compliance:"", time_to_benefit_weeks:"", capsules_to_benefit:"" } },
-    { id:"vispo",     name:"ViSPO®",   specs:{ clinical_study:"", usp_verified:"", unique_claims:"", std_to_bio_fatty_acids:"", solvent_free:"", monograph_compliance:"", time_to_benefit_weeks:"", capsules_to_benefit:"" } },
-    { id:"flomentum", name:"Flomentum",specs:{ clinical_study:"", usp_verified:"", unique_claims:"", std_to_bio_fatty_acids:"", solvent_free:"", monograph_compliance:"", time_to_benefit_weeks:"", capsules_to_benefit:"" } },
-    { id:"trunature", name:"Trunature",specs:{ clinical_study:"", usp_verified:"", unique_claims:"", std_to_bio_fatty_acids:"", solvent_free:"", monograph_compliance:"", time_to_benefit_weeks:"", capsules_to_benefit:"" } }
+    {
+      id:"usplus", name:"USPlus",
+      specs:{
+        usp_verified:1,
+        clinical_study:1,
+        unique_claims:1,
+        solvent_free:1,
+        monograph_compliance:1,
+        time_to_benefit_weeks:4,
+        capsules_to_benefit:30
+      }
+    },
+    {
+      id:"vispo", name:"ViSPO",
+      specs:{
+        usp_verified:0,
+        clinical_study:1,
+        unique_claims:0,
+        solvent_free:0,
+        monograph_compliance:0,
+        time_to_benefit_weeks:12,
+        capsules_to_benefit:90
+      }
+    },
+    {
+      id:"flowens", name:"Flowens",
+      specs:{
+        usp_verified:0,
+        clinical_study:1,
+        unique_claims:0,
+        solvent_free:0,
+        monograph_compliance:0,
+        time_to_benefit_weeks:24,
+        capsules_to_benefit:180
+      }
+    },
+    {
+      id:"sabalselect", name:"SabalSelect",
+      specs:{
+        usp_verified:0,
+        clinical_study:1,
+        unique_claims:0,
+        solvent_free:0,
+        monograph_compliance:0,
+        time_to_benefit_weeks:12,
+        capsules_to_benefit:90
+      }
+    },
+    {
+      id:"permixon", name:"Permixon",
+      specs:{
+        usp_verified:0,
+        clinical_study:1,
+        unique_claims:0,
+        solvent_free:0,
+        monograph_compliance:0,
+        time_to_benefit_weeks:12,
+        capsules_to_benefit:90
+      }
+    }
   ]
 };
 
+/* ---------- DOM boot ---------- */
 document.addEventListener('DOMContentLoaded', () => {
-  // Basic elements
   const yr = document.getElementById('yr'); if (yr) yr.textContent = new Date().getFullYear();
   const form       = document.getElementById('form');
   const selectEl   = document.getElementById('paramSelect');
@@ -32,11 +92,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const results    = document.getElementById('results');
   const tableWrap  = document.getElementById('tableWrap');
   const paramTitle = document.getElementById('paramTitle');
+  const submitBtn  = document.getElementById('submitBtn');
 
-  // Guard: if select not found, show a clear message
   if (!selectEl) {
-    console.error('paramSelect element not found. Check your index.html: <select id="paramSelect">…</select>');
-    if (errBox) { errBox.textContent = 'Setup error: parameter dropdown missing (id="paramSelect").'; errBox.style.display = 'block'; }
+    console.error('Missing <select id="paramSelect"> in index.html');
+    if (errBox) { errBox.textContent = 'Setup error: parameter dropdown missing.'; errBox.style.display = 'block'; }
     return;
   }
 
@@ -44,76 +104,41 @@ document.addEventListener('DOMContentLoaded', () => {
   if (errBox) errBox.style.display = 'none';
   if (results) results.style.display = 'none';
 
-  // Populate dropdown
-  try {
-    selectEl.innerHTML = '<option value="">Select…</option>';
-    CONFIG.parameters.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.key;
-      opt.textContent = p.label;
-      selectEl.appendChild(opt);
-    });
-  } catch (e) {
-    console.error('Failed to populate dropdown:', e);
-    if (errBox) { errBox.textContent = 'Could not build parameter list.'; errBox.style.display = 'block'; }
-    return;
-  }
-
-  // Helpers
-  const boolToNum = (v) => (v==="1"||v===1||v===true||v==="true"||v==="yes") ? 1
-                       : (v==="0"||v===0||v===false||v==="false"||v==="no") ? 0 : NaN;
-  const fmt = (v,type) => (v===""||v===undefined||v===null) ? "—" : (type==="boolean" ? (boolToNum(v)===1?"Yes":"No") : v);
-
-  // Render table for chosen param
-  function renderParamTable(paramKey){
-    const param = CONFIG.parameters.find(p=>p.key===paramKey);
-    if (!param) return;
-    if (paramTitle) paramTitle.textContent = `Results • ${param.label}`;
-
-    const brands = [...CONFIG.products]; // USPlus first by design
-    const th = ['<th>Parameter</th>', ...brands.map(b=>`<th>${b.name}</th>`)].join('');
-    const tr = [`<td>${param.label}</td>`, ...brands.map(b=>`<td>${fmt(b.specs[param.key], param.type)}</td>`)].join('');
-
-    tableWrap.innerHTML = `<table><thead><tr>${th}</tr></thead><tbody><tr>${tr}</tr></tbody></table>`;
-    if (results) results.style.display = 'block';
-  }
-
-  // Submit handler
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (okBox) okBox.style.display = 'none';
-    if (errBox) errBox.style.display = 'none';
-    if (results) results.style.display = 'none';
-
-    const paramKey = selectEl.value;
-    const consent  = document.getElementById('consent')?.checked;
-
-    if (!paramKey || !consent) {
-      if (errBox) { errBox.textContent = 'Please choose a parameter and accept consent.'; errBox.style.display = 'block'; }
-      return;
-    }
-
-    renderParamTable(paramKey);
-
-    if (SCRIPT_URL) {
-      const payload = {
-        parameter: paramKey,
-        timestamp: new Date().toISOString(),
-        email: (form.email?.value || '').trim(),
-        notes: (form.notes?.value || '').trim(),
-        values: CONFIG.products.map(p=>({ brand:p.name, value:p.specs[paramKey] }))
-      };
-      try {
-        await fetch(SCRIPT_URL, {
-          method:'POST', mode:'no-cors',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify(payload)
-        });
-        if (okBox) okBox.style.display = 'block';
-      } catch {}
-    }
+  // Build parameter dropdown
+  selectEl.innerHTML = '<option value="">Select…</option>';
+  CONFIG.parameters.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.key;
+    opt.textContent = p.label;
+    selectEl.appendChild(opt);
   });
 
-  // Quick console helper
-  window.show = (k)=>{ selectEl.value = k; form.dispatchEvent(new Event('submit', {cancelable:true})); };
-});
+  // Helper formatting
+  const fmt = (v, type) => {
+    if (v === "" || v === undefined || v === null) return "—";
+    if (type === "boolean") return (Number(v) === 1 ? "Yes" : "No");
+    return v;
+  };
+
+  // Ensure brands are displayed in the requested order
+  const brands = CONFIG.brandsOrder.map(name => {
+    const match = CONFIG.products.find(p => p.name.toLowerCase() === name.toLowerCase());
+    return match || { id:name.toLowerCase(), name, specs:{} };
+  });
+
+  // Render table for one parameter
+  function renderParamTable(paramKey) {
+    const param = CONFIG.parameters.find(p => p.key === paramKey);
+    if (!param) return;
+
+    if (paramTitle) paramTitle.textContent = `Results • ${param.label}`;
+
+    const head = ['<th>Parameter</th>', ...brands.map(b => `<th>${b.name}</th>`)].join('');
+    const row  = [`<td>${param.label}</td>`, ...brands.map(b => `<td>${fmt(b.specs[param.key], param.type)}</td>`)].join('');
+
+    tableWrap.innerHTML = `<table>
+      <thead><tr>${head}</tr></thead>
+      <tbody><tr>${row}</tr></tbody>
+    </table>`;
+
+    if
