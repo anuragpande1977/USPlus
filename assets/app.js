@@ -1,7 +1,7 @@
-// === USPlus® — Single-Parameter Table Comparator (frontend) ===
-// No consent, no notes, no logging — clean and simple.
+// === USPlus® — Single-Parameter Table Comparator (robust) ===
 
-const CONFIG = {
+// Expose CONFIG on window for debugging in Console.
+window.CONFIG = {
   parameters: [
     { key:"usp_verified",           label:"USP Verified",                           type:"boolean" },
     { key:"clinical_study",         label:"Clinical Study Availability",            type:"boolean" },
@@ -11,7 +11,6 @@ const CONFIG = {
     { key:"time_to_benefit_weeks",  label:"Clinically Meaningful Benefits (weeks)", type:"number"  },
     { key:"capsules_to_benefit",    label:"Capsules Needed for Benefit",            type:"number"  }
   ],
-  // Order: USPlus, ViSPO, Flowens, SabalSelect, Permixon
   products: [
     {
       id:"usplus", name:"USPlus",
@@ -77,7 +76,8 @@ const CONFIG = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Basic handles
+  console.log('[USPlus Comparator] DOMContentLoaded');
+
   const yr = document.getElementById('yr'); if (yr) yr.textContent = new Date().getFullYear();
   const form       = document.getElementById('form');
   const selectEl   = document.getElementById('paramSelect');
@@ -85,49 +85,69 @@ document.addEventListener('DOMContentLoaded', () => {
   const results    = document.getElementById('results');
   const tableWrap  = document.getElementById('tableWrap');
   const paramTitle = document.getElementById('paramTitle');
+  const paramDebug = document.getElementById('paramDebug');
 
+  if (!form)       { console.error('Form #form not found'); }
+  if (!selectEl)   { console.error('Select #paramSelect not found'); }
+  if (!tableWrap)  { console.error('Div #tableWrap not found'); }
+
+  // If the select element is missing, show a visible error
   if (!selectEl) {
-    console.error('Missing <select id="paramSelect"> in index.html');
-    if (errBox) { errBox.textContent = 'Setup error: parameter dropdown missing.'; errBox.style.display = 'block'; }
+    if (errBox) { errBox.textContent = 'Setup error: parameter dropdown missing (id="paramSelect").'; errBox.style.display = 'block'; }
     return;
   }
 
-  if (errBox) errBox.style.display = 'none';
-  if (results) results.style.display = 'none';
-
-  // Populate dropdown (robust)
+  // Populate dropdown safely
   try {
+    const params = (window.CONFIG && Array.isArray(window.CONFIG.parameters)) ? window.CONFIG.parameters : [];
+    console.log('[USPlus Comparator] parameters found:', params.length, params);
+
     selectEl.innerHTML = '<option value="">Select…</option>';
-    CONFIG.parameters.forEach(p => {
+
+    params.forEach(p => {
+      if (!p || !p.key || !p.label) return;
       const opt = document.createElement('option');
       opt.value = p.key;
       opt.textContent = p.label;
       selectEl.appendChild(opt);
     });
+
+    // Visible debug if 0 options (beyond the "Select…" placeholder)
+    const optionCount = selectEl.querySelectorAll('option').length - 1;
+    if (paramDebug) {
+      paramDebug.style.display = 'block';
+      paramDebug.textContent = `Loaded ${optionCount} parameters`;
+    }
+    if (optionCount <= 0) {
+      console.warn('No parameters inserted into dropdown. Check window.CONFIG.parameters.');
+      if (errBox) { errBox.textContent = 'No parameters available. Please check app.js CONFIG.'; errBox.style.display = 'block'; }
+      return;
+    }
   } catch (e) {
     console.error('Failed to populate dropdown:', e);
     if (errBox) { errBox.textContent = 'Could not build parameter list.'; errBox.style.display = 'block'; }
     return;
   }
 
-  // Helpers
   const fmt = (v, type) => {
     if (v === "" || v === undefined || v === null) return "—";
     if (type === "boolean") return (Number(v) === 1 ? "Yes" : "No");
     return v;
-  };
+    };
 
-  // Render table for one parameter
   function renderParamTable(paramKey) {
-    const param = CONFIG.parameters.find(p => p.key === paramKey);
+    const params = window.CONFIG.parameters || [];
+    const param = params.find(p => p.key === paramKey);
     if (!param) return;
 
     if (paramTitle) paramTitle.textContent = `Results • ${param.label}`;
 
-    // header: brands as columns
-    const head = ['<th>Parameter</th>', ...CONFIG.products.map(b => `<th>${b.name}</th>`)].join('');
-    // single row: selected parameter values per brand
-    const row  = [`<td>${param.label}</td>`, ...CONFIG.products.map(b => `<td>${fmt(b.specs[param.key], param.type)}</td>`)].join('');
+    const brands = window.CONFIG.products || [];
+    // Build header row
+    const head = ['<th>Parameter</th>', ...brands.map(b => `<th>${b.name}</th>`)].join('');
+    // Build single data row
+    const row  = [`<td>${param.label}</td>`,
+      ...brands.map(b => `<td>${fmt((b.specs||{})[param.key], param.type)}</td>`)].join('');
 
     tableWrap.innerHTML = `
       <table>
@@ -135,11 +155,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <tbody><tr>${row}</tr></tbody>
       </table>
     `;
-
     if (results) results.style.display = 'block';
   }
 
-  // Submit: validate & render
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     if (errBox) errBox.style.display = 'none';
@@ -160,7 +178,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderParamTable(paramKey);
   });
 
-  // Convenience for quick test in console: window.show('usp_verified')
-  window.show = (k)=>{ selectEl.value = k; form.dispatchEvent(new Event('submit', {cancelable:true})); };
+  // Quick console helper:
+  window.show = (key) => { selectEl.value = key; form.dispatchEvent(new Event('submit', { cancelable:true })); };
 });
-
