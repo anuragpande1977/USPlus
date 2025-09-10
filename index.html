@@ -18,7 +18,7 @@
   <main class="wrap">
     <section class="card">
       <form id="form" novalidate>
-        <!-- First line: Email + Name -->
+        <!-- Row 1: Email + Name -->
         <div class="grid grid-3">
           <div>
             <label>Email Address <span class="req">*</span></label>
@@ -28,32 +28,21 @@
             <label>Your Name</label>
             <input type="text" name="name" id="name" placeholder="Optional" />
           </div>
-          <div style="display:flex;align-items:flex-end">
-            <label class="muted" style="margin:0">Valensa • USPlus®</label>
-          </div>
+          <div></div>
         </div>
 
-        <!-- Second line: Parameter dropdown -->
+        <!-- Row 2: Parameter dropdown -->
         <div class="grid grid-3" style="margin-top:8px">
           <div>
             <label>Parameter <span class="req">*</span></label>
             <select id="paramSelect" required></select>
           </div>
-          <div>
-            <label>Notes (optional)</label>
-            <input type="text" name="notes" placeholder="e.g., R&D review" />
-          </div>
           <div style="display:flex;align-items:flex-end">
-            <label class="muted" style="margin:0">Yes/No show as values for boolean items</label>
+            <button type="submit" class="btn" id="submitBtn">Compare</button>
           </div>
+          <div></div>
         </div>
 
-        <div class="actions" style="margin-top:10px">
-          <label class="muted"><input type="checkbox" id="consent" required> I consent to store this comparison to improve USPlus.</label>
-          <button type="submit" class="btn" id="submitBtn">Compare</button>
-        </div>
-
-        <div class="success" id="okBox" style="display:none">Saved.</div>
         <div class="error" id="errBox" style="display:none">Sorry, something went wrong.</div>
       </form>
     </section>
@@ -69,4 +58,3 @@
   <script src="assets/app.js"></script>
 </body>
 </html>
-
