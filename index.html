@@ -3,46 +3,52 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>USPlus® — Head-to-Head Comparator | Valensa</title>
+<title>USPlus® — Quick Comparator | Valensa</title>
 <meta name="theme-color" content="#43215f">
 <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
-  <!-- Brand header -->
   <header class="hero">
     <div class="container">
-      <div class="brand">
-        <img class="valensa" src="assets/valensa-logo.png" alt="Valensa" />
-        <img class="usplus" src="assets/usplus-logo.png" alt="USPlus" />
-      </div>
       <h1>USPlus® Comparator</h1>
-      <p>Select a parameter to compare USPlus against leading brands.</p>
+      <p>Select one parameter and view values across brands.</p>
     </div>
   </header>
 
   <main class="wrap">
     <section class="card">
-      <form id="form">
+      <form id="form" novalidate>
+        <!-- First line: Email + Name -->
         <div class="grid grid-3">
+          <div>
+            <label>Email Address <span class="req">*</span></label>
+            <input type="email" name="email" id="email" placeholder="you@example.com" autocomplete="email" required />
+          </div>
+          <div>
+            <label>Your Name</label>
+            <input type="text" name="name" id="name" placeholder="Optional" />
+          </div>
+          <div style="display:flex;align-items:flex-end">
+            <label class="muted" style="margin:0">Valensa • USPlus®</label>
+          </div>
+        </div>
+
+        <!-- Second line: Parameter dropdown -->
+        <div class="grid grid-3" style="margin-top:8px">
           <div>
             <label>Parameter <span class="req">*</span></label>
             <select id="paramSelect" required></select>
           </div>
           <div>
-            <label>Your Email (optional)</label>
-            <input type="email" name="email" placeholder="you@example.com" autocomplete="email" />
-          </div>
-          <div>
             <label>Notes (optional)</label>
             <input type="text" name="notes" placeholder="e.g., R&D review" />
           </div>
+          <div style="display:flex;align-items:flex-end">
+            <label class="muted" style="margin:0">Yes/No show as values for boolean items</label>
+          </div>
         </div>
 
-        <div class="muted small" style="margin-top:6px">
-          Scoring: Yes/No parameters score 1/0. For numeric parameters the direction is shown next to the name.
-        </div>
-
-        <div class="actions">
+        <div class="actions" style="margin-top:10px">
           <label class="muted"><input type="checkbox" id="consent" required> I consent to store this comparison to improve USPlus.</label>
           <button type="submit" class="btn" id="submitBtn">Compare</button>
         </div>
@@ -54,7 +60,6 @@
 
     <section class="card" id="results" style="display:none">
       <h2 id="paramTitle">Results</h2>
-      <div id="bars" class="bars"></div>
       <div id="tableWrap" class="tableWrap"></div>
     </section>
   </main>
@@ -64,3 +69,4 @@
   <script src="assets/app.js"></script>
 </body>
 </html>
+
